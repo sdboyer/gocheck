@@ -4,7 +4,7 @@
 package gocheck_test
 
 import (
-	"launchpad.net/gocheck"
+	"github.com/sdboyer/gocheck"
 	"os"
 	"reflect"
 	"runtime"

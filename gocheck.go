@@ -37,16 +37,21 @@ const (
 	missedSt
 )
 
+type NameableSuite interface {
+	SuiteName() string
+}
+
 type funcStatus int
 
 // A method value can't reach its own Method structure.
 type methodType struct {
 	reflect.Value
 	Info reflect.Method
+	Suite reflect.Value
 }
 
 func newMethod(receiver reflect.Value, i int) *methodType {
-	return &methodType{receiver.Method(i), receiver.Type().Method(i)}
+	return &methodType{receiver.Method(i), receiver.Type().Method(i), receiver}
 }
 
 func (method *methodType) PC() uintptr {
@@ -58,6 +63,11 @@ func (method *methodType) suiteName() string {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
+
+	if nameable, ok := method.Suite.Interface().(NameableSuite); ok {
+		return nameable.SuiteName()
+	}
+
 	return t.Name()
 }
 

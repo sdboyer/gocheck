@@ -14,7 +14,7 @@ package gocheck_test
 
 import (
 	"fmt"
-	"launchpad.net/gocheck"
+	"github.com/sdboyer/gocheck"
 	"strings"
 )
 
