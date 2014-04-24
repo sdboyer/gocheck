@@ -199,8 +199,66 @@ var DeepEquals Checker = &deepEqualsChecker{
 	&CheckerInfo{Name: "DeepEquals", Params: []string{"obtained", "expected"}},
 }
 
+// -----------------------------------------------------------------------
+// Contains checker.
+
+type containsChecker struct {
+	*CheckerInfo
+}
+
+// The Contains checker verifies that the obtained value (the needle) is
+// present in the expected value (the haystack). This requires that the
+// expected value be an array or slice of the obtained value. If these
+// types are not aligned, or if the haystack is not an array or slice,
+// the checker will error.
+//
+// Passing an empty haystack will return false, but will not error.
+//
+// Comparison for equality is made using reflect.DeepEquals, the same
+// as the DeepEquals checker.
+
 func (checker *deepEqualsChecker) Check(params []interface{}, names []string) (result bool, error string) {
 	return reflect.DeepEqual(params[0], params[1]), ""
+}
+
+var Contains Checker = &containsChecker{
+	&CheckerInfo{Name: "Contains", Params: []string{"haystack", "needle"}},
+}
+
+func (cc *containsChecker) Check(params []interface{}, names []string) (result bool, error string) {
+	needle := reflect.ValueOf(params[1])
+	haystack := reflect.ValueOf(params[0])
+
+	switch haystack.Kind() {
+	default:
+		return false, "Haystack must be a slice or array."
+	case reflect.Slice, reflect.Array:
+	}
+
+	haylen := haystack.Len()
+	if haylen == 0 {
+		// have to check this before type because can't check type reliably without a value
+		return false, ""
+	}
+
+	typealign := true
+	// TODO will this actually work for arrays?
+	if reflect.SliceOf(needle.Type()) != haystack.Type() {
+		typealign = haystack.Index(0).Kind() == reflect.Interface &&
+			haystack.Index(0).Elem().Type() == needle.Type()
+	}
+
+	if !typealign {
+		return false, "Haystack must be a slice with the same element type as needle."
+	}
+
+	for i := 0; i < haylen; i++ {
+		if reflect.DeepEqual(haystack.Index(i).Interface(), needle.Interface()) {
+			return true, ""
+		}
+	}
+
+	return false, ""
 }
 
 // -----------------------------------------------------------------------
