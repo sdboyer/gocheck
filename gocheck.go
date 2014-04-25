@@ -37,8 +37,8 @@ const (
 	missedSt
 )
 
-type NameableSuite interface {
-	SuiteName() string
+type SuiteLabeler interface {
+	SuiteLabel() string
 }
 
 type funcStatus int
@@ -62,10 +62,6 @@ func (method *methodType) suiteName() string {
 	t := method.Info.Type.In(0)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
-	}
-
-	if nameable, ok := method.Suite.Interface().(NameableSuite); ok {
-		return nameable.SuiteName()
 	}
 
 	return t.Name()
@@ -920,7 +916,13 @@ func (ow *outputWriter) WriteCallSuccess(label string, c *C) {
 
 func renderCallHeader(label string, c *C, prefix, suffix string) string {
 	pc := c.method.PC()
+	nfn := niceFuncName(pc)
+
+	if nameable, ok := c.method.Suite.Interface().(SuiteLabeler); ok {
+		nfn = fmt.Sprintf("%s (%s)", nfn, nameable.SuiteLabel())
+	}
+
 	return fmt.Sprintf("%s%s: %s: %s%s", prefix, label, niceFuncPath(pc),
-		niceFuncName(pc), suffix)
+		nfn, suffix)
 }
 
